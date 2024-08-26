@@ -1,19 +1,15 @@
 {
-  "name": "auth0-block-idp-signup",
-  "version": "1.0.0",
-  "lockfileVersion": 3,
-  "requires": true,
-  "type": "module",
-  "packages": {},
-  "devDependencies": {
-    "@vitest/coverage-v8": "^1.6.0",
-    "auth0": "^4.8.0",
-    "ejs-lint": "^2.0.0",
-    "mock-require": "^3.0.3",
-    "vitest": "^1.6.0"
-  },
-  "scripts": {
-    "test": "vitest run --no-file-parallelism",
-    "test-coverage": "vitest run --no-file-parallelism --coverage"
+    "name": "vitest-mockrequire",
+    "description": "Module loader overrides to mock code-under-test CommonJS modules from vitest",
+    "keywords": [ "vitest", "CommonJS", "require", "mock" ],
+    "version": "1.0.0",
+    "homepage": "https://github.com/jmussman/vitest-mockrequire",
+    "author": "Joel Mussman <jmussman@wsmallrock.net> (http://linkedin.com/in/jmussman)",
+    "license": "MIT",
+    "type": "module",
+    "main": "./dist/index.js",
+    "repository": "github:jmussman/vitest-mockrequire",
+    "devDependencies": {
+      "vitest": "latest"
+    }
   }
-}

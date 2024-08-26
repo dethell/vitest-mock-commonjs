@@ -1,4 +1,4 @@
-// mockNodeRequire
+// mockForNodeRequire
 // Copyright © 2024 Joel A Mussman. All rights reserved.
 //
 
@@ -6,11 +6,11 @@
 // is to name it and refer to the name, this explains the class funciton . testDoubles is
 // used to hold the double for each module overridden.
 
-async function  mockNodeRequire(module, testDouble) {
+async function  mockForNodeRequire(module, testDouble) {
 
-    if (!Object.getOwnPropertyNames(mockNodeRequire).testDoubles) {
+    if (!mockForNodeRequire.testDoubles) {
 
-        mockNodeRequire.testDoubles = {}
+        mockForNodeRequire.testDoubles = {}
 
         // On the first call override the Module._load() method in Node.js. The override checks the
         // testDoubles to see if the module requested is overridden, and if it is the double is
@@ -22,13 +22,13 @@ async function  mockNodeRequire(module, testDouble) {
 
         Module._load = (uri, parent) => {
 
-            const result = mockNodeRequire.testDoubles[uri] ?? Module._load_original(uri, parent)
+            const result = mockForNodeRequire.testDoubles[uri] ?? Module._load_original(uri, parent)
 
             return result
         }
     }
 
-    mockNodeRequire.testDoubles[module] = testDouble
+    mockForNodeRequire.testDoubles[module] = testDouble
 
     // If the function is standalone, "this" will be undefined. If the function is used attached to
     // vi (VitestUtils) the function will return the object for chained method calls.
@@ -36,4 +36,9 @@ async function  mockNodeRequire(module, testDouble) {
     return this
 }
 
-export default mockNodeRequire
+// Force overriding Module._load during the load; the reason the override is defined inside the function
+// is to leverage closure for testDoubles.
+
+mockForNodeRequire()
+
+export default mockForNodeRequire

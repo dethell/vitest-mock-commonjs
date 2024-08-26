@@ -15,7 +15,7 @@ import { Vitest } from "vitest";
 
 interface VitestUtils {
 
-    mockNodeRequire: (module: string, testDouble: any) => VitestUtils
+    mockForNodeRequire: (module: string, testDouble: any) => VitestUtils
 }
 
-export function mockNodeRequire(module: string, testDouble: any): void;
+export function mockForNodeRequire(module: string, testDouble: any): void;

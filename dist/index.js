@@ -9,13 +9,13 @@
 
 import { vi } from 'vitest'
 
-import mockNodeRequire from '../src/mockNodeRequire'
+import mockForNodeRequire from '../src/mockForNodeRequire'
 
 // vi is and alias, not a class, and does not have a prototoype. The function is injected
 // directly onto it. See the index.d.ts file for TypeScript declarations.
 
-vi.mockNodeRequire = mockNodeRequire
+vi.mockForNodeRequire = mockForNodeRequire
 
 // Export all defined mock creation functions here for direct use.
 
-export { mockNodeRequire }
+export { mockForNodeRequire }

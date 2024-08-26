@@ -1,25 +1,29 @@
-![Banner Light](./.assets/banner-vitest-mockrequire-light.png#gh-light-mode-only)
-![banner Dark](./.assets/banner-vitest-mockrequire-dark.png#gh-dark-mode-only)
+![Banner Light](./.assets/banner-vitest-mock-commonjs-light.png#gh-light-mode-only)
+![banner Dark](./.assets/banner-vitest-mock-commonjs-dark.png#gh-dark-mode-only)
 
-# vitest-mockrequire
+# vitest-mock-commonjs
 
 ## Overview
 
 I started writing more vitest scenarios for Auth0 Action Scripts and Auth0 does not support ESM in Action Scripts, only CommonJS.
-So I became frustrated trying to work around the limitation in vitest that it won't mock Node.js "require".
+So I became frustrated trying to work around the limitation in vitest that it won't shim the Node.js "require" statement so that
+I can mock a CommonJS module.
+You may be wondering about the name, but the goal is not to mock "require", it is to shim require so that we can mock CommonJS modules!
+
 I understand the problems facing the maintainers of vitest:
-they are focused on ESM, and if you are using a package framework with its own module loader this may not be easy to hook into and override the
-loading of CommonJS modules.
-And it is not common to use both ESM and CommonJS at the same time, but in the case of writing tests for Auth0 Action Scripts that
-is exactly what I want to do: the scripts must use JavaScript and CommonJS, but I want the test suites to be written with ESM in either JavaScript
+they are focused on ESM, and if you are using a package framework with its own module loader it may not be easy to hook into and shim
+to override the loading of CommonJS modules.
+And many folks may not consider it important to use both ESM and CommonJS at the same time.
+But in the case of writing tests for Auth0 Action Scripts that is exactly what I want to do!
+The scripts must be written in JavaScript with CommonJS, but I want the test suites to be written using ESM in either JavaScript
 or TypeScript!
 
 The CommonJS module loader for Node.js is well defined and that is what I focused on first.
 Well, maybe not well defined in the documentation, but how it works is common knowledge!
-So, to start I created a Node.js package that can be used to shim a "mockNodeRequire" method onto the vi object in vitest
+So, to start I created a Node.js package that can be used to shim a "mockForNodeRequire" method onto the vi object in vitest
 to mock "requires" in the code under test.
-The model allows for similar shims to be created in the future and delivered for other module loaders using the
-common framework defined in this package.
+This module is hidden behind a controller in index.js, which allows multiple shims for other module loaders
+to be injected into vitest using a common framework.
 
 ## Configuration and Use
 
@@ -27,7 +31,7 @@ common framework defined in this package.
 
 | Framework Name | vi.{Method} or Function Name |
 |---|---|
-| Node.js | mockNodeRequire |
+| Node.js | mockForNodeRequire |
 
 ### Installation
 
@@ -49,7 +53,7 @@ The package.json over the test-suite should specify "latest" as the version for 
 ```
 {
     "devDependencies": {
-        "vitest-mockrequire": "latest"
+        "vitest-mock-commonjs": "latest"
         "vitest": "latest"
     }
 }
@@ -63,13 +67,13 @@ What other exports from vitest you import are up to you, this is just an example
 
 ```
 import { beforeAll, beforeEach, vi } from 'vitest'
-import 'vitest-mockrequire'
+import 'vitest-mock-commonjs'
 ```
 
 vitest-mockrequire also exports the mock creation functions for direct use, simply import the named functions:
 
 ```
-import { mockNodeRequire } from 'vitest-mockrequire'
+import { mockForNodeRequire } from 'vitest-mock-commonjs'
 ```
 
 ### Mocking a CommonJS module
@@ -79,7 +83,7 @@ This example shows both forms.
 {} is used as a placeholder here for the actual test double:
 
 ```
-vi.mockNodeRequire('auth0', {}) // or directly with mockNodeRequire('auth0', {})
+vi.mockForNodeRequire('auth0', {}) // or directly with mockForNodeRequire('auth0', {})
 ```
 
 TypeScript declarations are included in the index.d.ts file, so this should be directly useable
@@ -132,7 +136,8 @@ If you follow this carefully, the class definition and the static object the cla
 attached to a property hoisted before using vitest and available in the global "mocks" variable.
 That way they can both be referenced for "expect" assertions in the tests!
 
-We only need to mock the CommonJS module(s) once; so that could be done in the hoisted code or it could be placed in
+We only need to mock the CommonJS module(s) once.
+There is no requirement to hoist this call, so that could be done in the hoisted code or more likely it could be placed in
 a definition of *beforeAll*:
 
 ```
@@ -140,7 +145,7 @@ describe('Action tests', async () => {
 
     beforeAll(async () => {
 
-        vi.mockNodeRequire('auth0', mocks.auth0Mock)
+        vi.mockForNodeRequire('auth0', mocks.auth0Mock)
     })
 ```
 
@@ -192,18 +197,16 @@ Of course an index.d.ts file is provided for TypeScript compatibility.
 
 ### 
 
-CommonJS require loads modules when called, not hoisted to the top of the module.
-Because of this, there is no requirement to hoist an overload of require before anything
-else in a module load.
-This model defines a function that may be used:
+This model defines a single function that is used to mock CommonJS modules but
+will also provide the shim for those test doubles to work:
 
 ```
-async function mockNodeRequire(module, testDouble) {
+async function mockForNodeRequire(module, testDouble) {
 }
 
-vi.mockNodeRequire = mockNodeRequire
+vi.mockForNodeRequire = mockForNodeRequire
 
-export default mockNodeRequire
+export default mockForNodeRequire
 ```
 
 ### Multiple Module Mocking
@@ -217,11 +220,11 @@ to get arround this the function is named using the classic JavaScript declarati
 the function within itself:
 
 ```
-async function  mockNodeRequire(module, testDouble) {
+async function  mockForNodeRequire(module, testDouble) {
 
     if (!Object.getOwnPropertyNames(mockRequire).testDoubles) {
 
-        mockNodeRequire.testDoubles = {}
+        mockForNodeRequire.testDoubles = {}
 ```
 
 ### Overridding Module._load
@@ -235,11 +238,11 @@ When require is called in the CUT, the new _load method looks at the module requ
 the double or uses the original _load method to serve the actual module if no double exists:
 
 ```
-async function  mockNodeRequire(module, testDouble) {
+async function  mockForNodeRequire(module, testDouble) {
 
-    if (!mockNodeRequire.testDoubles) {
+    if (!mockForNodeRequire.testDoubles) {
 
-        mockNodeRequire.testDoubles = {}
+        mockForNodeRequire.testDoubles = {}
 
         const { Module } = await import('module')
 
@@ -253,9 +256,22 @@ async function  mockNodeRequire(module, testDouble) {
         }
     }
 
-    mockNodeRequire.testDoubles[module] = testDouble
+    if (module && testDouble) {
+
+        mockForNodeRequire.testDoubles[module] = testDouble
+    }
 }
+
+mockForNodeRequire()
+
+export default mockForNodeRequire
 ```
+
+There is a conditional check provided to avoid trying to record a double when no module is specified.
+The shim does need to be hoisted, but if the function is called without a module argument during
+initialization the the shim is hoisted anyways because module initialization is hoisted.
+You may wonder why do that at all, why not just define the shim outside of the function?
+We keep it as a lambda inside so that it has closure access to the testDouble property!
 
 The last step is the index.js module.
 This loads all of the defined mock creation modules for different module loaders and attaches them
@@ -263,11 +279,11 @@ too the vi object:
 
 ```
 import { vi } from 'vitest'
-import mockNodeRequire from '../src/mockNodeRequire'
+import mockForNodeRequire from '../src/mockForNodeRequire'
 
-vi.mockNodeRequire = mockNodeRequire
+vi.mockForNodeRequire = mockForNodeRequire
 
-export { mockNodeRequire }
+export { mockForNodeRequire }
 ```
 
 ## License

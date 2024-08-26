@@ -140,22 +140,22 @@ describe('Action tests', async () => {
 
     beforeAll(async () => {
 
-        mockNodeRequire('auth0', mocks.auth0Mock)
+        vi.mockNodeRequire('auth0', mocks.auth0Mock)
     })
 ```
 
 All that is left is checking to see if the function was actually called in the code under test:
 
 ```
-it('Rejects authentication when the only deny entry is the denied user', async () => {
+    it('Rejects authentication when the only deny entry is the denied user', async () => {
 
-    mocks.eventMock.secrets.deny = 'calicojack@pyrates.live'
-    mocks.eventMock.user.email = 'calicojack@pyrates.live'
+        mocks.eventMock.secrets.deny = 'calicojack@pyrates.live'
+        mocks.eventMock.user.email = 'calicojack@pyrates.live'
 
-    await onExecutePostLogin(mocks.eventMock, mocks.apiMock)
+        await onExecutePostLogin(mocks.eventMock, mocks.apiMock)
 
-    expect(mocks.auth0Mock.managementClient.users.delete).toHaveBeenCalled()
-})
+        expect(mocks.auth0Mock.managementClient.users.delete).toHaveBeenCalled()
+    })
 ```
 
 There are test double definitions missing in the example, hinted at by the individual test case above.
@@ -166,6 +166,23 @@ these examples were pulled can be seen at https://github.com/jmussman/auth0-bloc
 
 The mocked CommonJS module will be loaded in the code under test because the module loader has
 been overridden to do so.
+This is what the CUT from the example looks like, and there is nothing in there to knowingly support
+the test (a fundamental principles of testing):
+
+```
+const ManagementClient = require('auth0').ManagementClient;
+
+const managementClient = new ManagementClient({
+
+    domain: event.secrets.domain,
+    clientId: event.secrets.clientId,
+    clientSecret: event.secrets.clientSecret,
+});
+
+...
+
+await managementClient.users.delete({ id: event.user.user_id });
+```
 
 ## Implementation (how it works)
 

@@ -9,7 +9,7 @@
 
 import { vi } from 'vitest'
 
-import mockForNodeRequire from '../src/mockForNodeRequire'
+import mockForNodeRequire from '../src/mockForNodeRequire.js'
 
 // vi is and alias, not a class, and does not have a prototoype. The function is injected
 // directly onto it. See the index.d.ts file for TypeScript declarations.
